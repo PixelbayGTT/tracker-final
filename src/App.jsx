@@ -246,7 +246,7 @@ export default function App() {
 
     const reasons = [
         "Internet", "Power Outage", "Personal Emergency",
-        "Personal (bathroom)", "Coaching", "Meeting", "Training"
+        "Personal (bathroom)", "Coaching", "Meeting", "Training", "Computer", "LINC"
     ];
 
     const handleInputChange = (e) => {
