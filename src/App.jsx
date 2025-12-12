@@ -2,7 +2,7 @@
 import { Clock, Save, Trash2, AlertCircle, CheckCircle2, Calendar, RefreshCw, UserCircle, LogOut, UserPlus, Calculator, Lock, Users } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc } from 'firebase/firestore';
 
 // --- 1. CONFIGURACIÓN DE FIREBASE (PEGA TUS LLAVES AQUÍ) ---
 const firebaseConfig = {
@@ -303,6 +303,16 @@ export default function App() {
     setError('');
   };
 
+  const toggleProcessed = async (id, currentStatus) => {
+    try {
+      await updateDoc(doc(db, 'tracker_logs', id), {
+        isProcessed: !currentStatus
+      });
+    } catch (err) {
+      console.error("Error toggling status:", err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.date || !formData.disconnectTime || !formData.reconnectTime) {
@@ -346,6 +356,7 @@ export default function App() {
       reason: formData.reason,
       duration: durationText,
       durationMinutes: lostMinutes,
+      isProcessed: false, // Por defecto no procesado
       isMUT: formData.isMUT,
       mutDetails: formData.isMUT ? {
         date: formData.mutDate,
@@ -377,7 +388,7 @@ export default function App() {
   };
 
   const exportToCSV = () => {
-    let csv = "data:text/csv;charset=utf-8,ID,Name,Date,Reason,Start,End,Lost Duration,MUT Required,MUT Date,MUT Start,MUT End,Restored Duration,Status\n";
+    let csv = "data:text/csv;charset=utf-8,ID,Name,Date,Reason,Start,End,Lost Duration,MUT Required,MUT Date,MUT Start,MUT End,Restored Duration,Status,Entered\n";
     logs.forEach(r => {
       let mut = "No,,,,";
       let statusText = "N/A";
@@ -385,8 +396,9 @@ export default function App() {
           mut = `Yes,${r.mutDetails.date},${r.mutDetails.start},${r.mutDetails.end},${r.mutDetails.duration}`;
           statusText = r.mutDetails.status ? `${r.mutDetails.status.message} (${r.mutDetails.status.subMessage})` : "Restored";
       }
+      const processed = r.isProcessed ? "Yes" : "No";
       // Incluimos siempre ID y Nombre (útil para el admin)
-      csv += `${r.employeeId},${r.employeeName},${r.date},${r.reason},${r.disconnectTime},${r.reconnectTime},${r.duration},${mut},${statusText}\n`;
+      csv += `${r.employeeId},${r.employeeName},${r.date},${r.reason},${r.disconnectTime},${r.reconnectTime},${r.duration},${mut},${statusText},${processed}\n`;
     });
     const link = document.createElement("a");
     link.href = encodeURI(csv);
@@ -504,14 +516,15 @@ export default function App() {
                       <th className="p-4 font-semibold border-b border-slate-200">Date</th>
                       <th className="p-4 font-semibold border-b border-slate-200">Incident</th>
                       <th className="p-4 font-semibold border-b border-slate-200">Make Up Status</th>
+                      <th className="p-4 font-semibold border-b border-slate-200 text-center">Entered?</th>
                       <th className="p-4 border-b border-slate-200"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {loading && logs.length === 0 ? (
-                      <tr><td colSpan={user.isAdmin ? 5 : 4} className="p-10 text-center text-slate-500">Loading data...</td></tr>
+                      <tr><td colSpan={user.isAdmin ? 6 : 5} className="p-10 text-center text-slate-500">Loading data...</td></tr>
                     ) : logs.length === 0 ? (
-                      <tr><td colSpan={user.isAdmin ? 5 : 4} className="p-10 text-center text-slate-400"><p>No logs found.</p></td></tr>
+                      <tr><td colSpan={user.isAdmin ? 6 : 5} className="p-10 text-center text-slate-400"><p>No logs found.</p></td></tr>
                     ) : (
                       logs.map((log) => (
                         <tr key={log.id} className="hover:bg-slate-50 transition-colors text-sm">
@@ -553,6 +566,17 @@ export default function App() {
                                 Not Required
                               </div>
                             )}
+                          </td>
+                          <td className="p-4 align-middle text-center">
+                            <button
+                              onClick={() => toggleProcessed(log.id, log.isProcessed)}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${log.isProcessed ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${log.isProcessed ? 'translate-x-6' : 'translate-x-1'}`}
+                              />
+                            </button>
+                            <span className="block text-[10px] text-slate-400 mt-1">{log.isProcessed ? 'Yes' : 'No'}</span>
                           </td>
                           <td className="p-4 align-middle text-center">
                             <button onClick={() => handleDelete(log.id)} className="text-slate-300 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
