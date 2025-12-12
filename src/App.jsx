@@ -7,20 +7,19 @@ import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, or
 // --- 1. CONFIGURACIÓN DE FIREBASE (PEGA TUS LLAVES AQUÍ) ---
 const firebaseConfig = {
 
-  apiKey: "AIzaSyAVGEp9Kg71HKMpAoLLWfr8ogytEAx4LRY",
+apiKey: "AIzaSyAVGEp9Kg71HKMpAoLLWfr8ogytEAx4LRY",
 
-  authDomain: "tracker-desconexiones.firebaseapp.com",
+authDomain: "tracker-desconexiones.firebaseapp.com",
 
-  projectId: "tracker-desconexiones",
+projectId: "tracker-desconexiones",
 
-  storageBucket: "tracker-desconexiones.firebasestorage.app",
+storageBucket: "tracker-desconexiones.firebasestorage.app",
 
-  messagingSenderId: "1051827757232",
+messagingSenderId: "1051827757232",
 
-  appId: "1:1051827757232:web:a5f5091e9187598a18db75"
+appId: "1:1051827757232:web:a5f5091e9187598a18db75"
 
 };
-
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
@@ -295,7 +294,7 @@ export default function App() {
 
   const reasons = [
     "Internet", "Power Outage", "Personal Emergency", 
-    "Personal (bathroom)", "Coaching", "Meeting", "Training", "Computer", "LINC"
+    "Personal (bathroom)", "Coaching", "Meeting", "Training"
   ];
 
   const handleInputChange = (e) => {
@@ -548,7 +547,12 @@ export default function App() {
                                     {log.mutDetails.date} <br/> {log.mutDetails.start}-{log.mutDetails.end}
                                 </div>
                               </div>
-                            ) : <span className="text-slate-400 text-xs italic">N/A</span>}
+                            ) : (
+                              <div className="bg-green-50 border border-green-200 rounded p-2 text-xs text-green-700 flex items-center gap-1 font-bold">
+                                <CheckCircle2 className="w-3 h-3"/>
+                                Not Required
+                              </div>
+                            )}
                           </td>
                           <td className="p-4 align-middle text-center">
                             <button onClick={() => handleDelete(log.id)} className="text-slate-300 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
